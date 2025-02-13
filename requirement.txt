@@ -1,0 +1,13 @@
+streamlit
+opencv-python
+pytesseract
+matplotlib
+Pillow
+ultralytics
+gTTS
+numpy
+pandas
+random
+platform
+os
+time

@@ -1,0 +1,64 @@
+# Byte-compiled files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE settings
+.idea/
+.vscode/
+*.code-workspace
+.ipynb_checkpoints
+
+# Build and distribution directories
+build/
+dist/
+*.egg-info/
+*.eggs/
+MANIFEST
+
+# Logs and databases
+*.log
+*.sqlite3
+*.db
+.DS_Store
+*.pid
+
+# Testing output
+coverage/
+.tox/
+.nox/
+.cache/
+pytest_cache/
+
+# PyInstaller
+*.spec
+
+# Jupyter Notebooks
+*.ipynb_checkpoints
+
+# Secrets and credentials
+*.key
+*.pem
+*.json
+*.yml
+*.yaml
+config.json
+secrets.json
+
+# Cloud and deployment
+uploads/    
+data/
+tmp/ 
+
+# Image files (optional, if not needed)
+*.jpg
+*.jpeg
+*.png
