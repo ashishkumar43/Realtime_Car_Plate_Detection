@@ -5,6 +5,7 @@ matplotlib
 Pillow
 ultralytics
 gTTS
+gtts
 numpy
 pandas
 random
