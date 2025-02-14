@@ -4,8 +4,8 @@ pytesseract
 matplotlib
 Pillow
 ultralytics
-gTTS
-gtts
+gTTS==2.5.4
+gtts==2.5.4
 numpy
 pandas
 random
