@@ -12,15 +12,25 @@ import random
 from PIL import Image
 import numpy as np
 from ultralytics import YOLO
+import subprocess
 
-if platform.system() == "Windows":
-    os.environ["TESSERACT_PATH"] = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-elif platform.system() == "Linux":
-    os.environ["TESSERACT_PATH"] = "/usr/bin/tesseract"
-else:
-    raise Exception("Unsupported OS for Tesseract OCR")
-pytesseract.pytesseract.tesseract_cmd = os.environ["TESSERACT_PATH"]
-print(f"Using Tesseract at: {pytesseract.pytesseract.tesseract_cmd}")  
+st.title("📦 Debug Installed Packages")
+
+installed_packages = subprocess.run(["pip", "list"], capture_output=True, text=True)
+st.text(installed_packages.stdout)
+
+import os
+import streamlit as st
+
+# Install gtts dynamically if not found
+try:
+    from gtts import gTTS
+except ModuleNotFoundError:
+    os.system("pip install gtts")
+    from gtts import gTTS  # Retry import
+
+st.write("✅ gTTS is installed and working!")
+
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 model = YOLO(r'best_license_plate_model_updated.pt') 
