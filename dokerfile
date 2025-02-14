@@ -1,0 +1,9 @@
+FROM python:3.12
+
+WORKDIR /app
+
+COPY requirement.txt requirement.txt
+RUN pip install -r requirement.txt
+
+COPY . .
+CMD ["streamlit", "run", "deploy_car_number_plate/main.py", "--server.port=$PORT", "--server.address=0.0.0.0"]
