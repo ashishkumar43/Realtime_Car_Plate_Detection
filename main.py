@@ -5,7 +5,6 @@ import cv2
 import pytesseract
 import re
 import os
-import platform
 import time
 import base64
 from PIL import Image
