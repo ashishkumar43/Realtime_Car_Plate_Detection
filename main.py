@@ -30,17 +30,6 @@ model = YOLO(r'best_license_plate_model_updated.pt')
 
 if "loading_complete" not in st.session_state:
     st.session_state.loading_complete = False
-       
-loading_messages = [
-    "🚀 Believe in AI, believe in yourself!",
-    "🤖 Innovation is intelligence having fun.",
-    "💡 The future belongs to those who code it.",
-    "🌟 Keep learning, keep growing!",
-    "🧠 Artificial Intelligence, Real Ambitions!",
-    "🎯 Patience is the key to great things!",
-    "🚗 Speeding up your experience, stay tuned!",
-]
-random_message = random.choice(loading_messages)
 
 loading_gif = "https://c.tenor.com/0iK9a1WkT40AAAAM/loading-white.gif"  
 
