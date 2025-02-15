@@ -8,20 +8,9 @@ import os
 import platform
 import time
 import base64
-import random 
 from PIL import Image
 import numpy as np
 from ultralytics import YOLO
-import subprocess
-
-import os
-os.system("apt-get update && apt-get install -y tesseract-ocr")
-
-
-st.title("📦 Debug Installed Packages")
-
-installed_packages = subprocess.run(["pip", "list"], capture_output=True, text=True)
-st.text(installed_packages.stdout)
 
 import os
 import streamlit as st
