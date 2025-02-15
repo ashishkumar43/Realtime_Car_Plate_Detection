@@ -28,112 +28,112 @@ st.write("✅ gTTS is installed and working!")
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 model = YOLO(r'best_license_plate_model_updated.pt') 
 
-if "loading_complete" not in st.session_state:
-    st.session_state.loading_complete = False
+# if "loading_complete" not in st.session_state:
+#     st.session_state.loading_complete = False
 
-loading_gif = "https://c.tenor.com/0iK9a1WkT40AAAAM/loading-white.gif"  
+# loading_gif = "https://c.tenor.com/0iK9a1WkT40AAAAM/loading-white.gif"  
 
-def show_loader():
-    loader_html = f"""
-    <style>
-        @keyframes fadeIn {{
-            0% {{ opacity: 0; }}
-            50% {{ opacity: 0.5; }}
-            100% {{ opacity: 1; }}
-        }}
+# def show_loader():
+#     loader_html = f"""
+#     <style>
+#         @keyframes fadeIn {{
+#             0% {{ opacity: 0; }}
+#             50% {{ opacity: 0.5; }}
+#             100% {{ opacity: 1; }}
+#         }}
 
-        @keyframes progressBar {{
-            0% {{ width: 0%; }}
-            25% {{ width: 40%; }}
-            50% {{ width: 60%; }}
-            75% {{ width: 85%; }}
-            100% {{ width: 100%; }}
-        }}
+#         @keyframes progressBar {{
+#             0% {{ width: 0%; }}
+#             25% {{ width: 40%; }}
+#             50% {{ width: 60%; }}
+#             75% {{ width: 85%; }}
+#             100% {{ width: 100%; }}
+#         }}
 
-        @keyframes typing {{
-            0% {{ content: "P"; }}
-            10% {{ content: "Pl"; }}
-            20% {{ content: "Ple"; }}
-            30% {{ content: "Plea"; }}
-            40% {{ content: "Pleas"; }}
-            50% {{ content: "Please"; }}
-            60% {{ content: "Please W."; }}
-            70% {{ content: "Please Wa.."; }}
-            80% {{ content: "Please Wai..."; }}
-            90% {{ content: "Please Wait...."; }}
-            100% {{ content: "Please Wait"; }}
-        }}
+#         @keyframes typing {{
+#             0% {{ content: "P"; }}
+#             10% {{ content: "Pl"; }}
+#             20% {{ content: "Ple"; }}
+#             30% {{ content: "Plea"; }}
+#             40% {{ content: "Pleas"; }}
+#             50% {{ content: "Please"; }}
+#             60% {{ content: "Please W."; }}
+#             70% {{ content: "Please Wa.."; }}
+#             80% {{ content: "Please Wai..."; }}
+#             90% {{ content: "Please Wait...."; }}
+#             100% {{ content: "Please Wait"; }}
+#         }}
 
-        #loader-container {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: radial-gradient(circle, #ffffff, #f2f2f2);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            z-index: 9999;
-            text-align: center;
-        }}
+#         #loader-container {{
+#             position: fixed;
+#             top: 0;
+#             left: 0;
+#             width: 100vw;
+#             height: 100vh;
+#             background: radial-gradient(circle, #ffffff, #f2f2f2);
+#             display: flex;
+#             justify-content: center;
+#             align-items: center;
+#             flex-direction: column;
+#             z-index: 9999;
+#             text-align: center;
+#         }}
 
-        .loader-img {{
-            max-width: 150px;
-            height: auto;
-        }}
+#         .loader-img {{
+#             max-width: 150px;
+#             height: auto;
+#         }}
 
-        .loading-text::after {{
-            font-size: 28px;  
-            font-weight: bold;
-            color: #333;
-            margin-top: 20px;
-            content: "Please Wait....";
-            animation: typing 3s infinite;
-        }}
+#         .loading-text::after {{
+#             font-size: 28px;  
+#             font-weight: bold;
+#             color: #333;
+#             margin-top: 20px;
+#             content: "Please Wait....";
+#             animation: typing 3s infinite;
+#         }}
 
-        .random-message {{
-            font-size: 20px;
-            font-style: italic;
-            color: #666;
-            margin-top: 10px;
-            animation: fadeIn 2s infinite alternate;
-        }}
+#         .random-message {{
+#             font-size: 20px;
+#             font-style: italic;
+#             color: #666;
+#             margin-top: 10px;
+#             animation: fadeIn 2s infinite alternate;
+#         }}
 
-        .progress-bar-container {{
-            width: 60%;
-            height: 10px;
-            background-color: #ddd;
-            border-radius: 5px;
-            margin-top: 15px;
-            overflow: hidden;
-        }}
+#         .progress-bar-container {{
+#             width: 60%;
+#             height: 10px;
+#             background-color: #ddd;
+#             border-radius: 5px;
+#             margin-top: 15px;
+#             overflow: hidden;
+#         }}
 
-        .progress-bar {{
-            height: 100%;
-            background-color: #007bff;
-            width: 0%;
-            animation: progressBar 5s linear forwards;
-        }}
-    </style>
+#         .progress-bar {{
+#             height: 100%;
+#             background-color: #007bff;
+#             width: 0%;
+#             animation: progressBar 5s linear forwards;
+#         }}
+#     </style>
 
-    <div id="loader-container">
-        <img src="{loading_gif}" class="loader-img">
-        <div class="loading-text"></div>
-        <div class="random-message">{random_message}</div>
-        <div class="progress-bar-container">
-            <div class="progress-bar"></div>
-        </div>
-    </div>
-    """
-    st.markdown(loader_html, unsafe_allow_html=True)
-    time.sleep(15)  
-    st.session_state.loading_complete = True
-    st.rerun()     
+#     <div id="loader-container">
+#         <img src="{loading_gif}" class="loader-img">
+#         <div class="loading-text"></div>
+#         <div class="random-message">{random_message}</div>
+#         <div class="progress-bar-container">
+#             <div class="progress-bar"></div>
+#         </div>
+#     </div>
+#     """
+#     st.markdown(loader_html, unsafe_allow_html=True)
+#     time.sleep(15)  
+#     st.session_state.loading_complete = True
+#     st.rerun()     
     
-if not st.session_state.loading_complete:
-    show_loader()
+# if not st.session_state.loading_complete:
+#     show_loader()
     
 def apply_custom_css():
     st.markdown("""
