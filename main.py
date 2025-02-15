@@ -21,6 +21,17 @@ except ModuleNotFoundError:
 
 # st.write("✅ gTTS is installed and working!")
 
+import pytesseract
+import subprocess
+
+# Check if Tesseract is installed
+try:
+    tesseract_version = subprocess.run(["tesseract", "--version"], capture_output=True, text=True, check=True)
+    print("Tesseract Installed:", tesseract_version.stdout)
+except FileNotFoundError:
+    print("Tesseract is NOT installed!")
+
+
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 model = YOLO(r'best_license_plate_model_updated.pt') 
     
