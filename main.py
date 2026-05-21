@@ -2,7 +2,7 @@ import streamlit as st
 from gtts import gTTS
 from io import BytesIO
 import cv2
-import pytesseract
+import easyocr
 import re
 import os
 import time
@@ -21,18 +21,9 @@ except ModuleNotFoundError:
 
 # st.write("✅ gTTS is installed and working!")
 
-import pytesseract
-import subprocess
 
-# Check if Tesseract is installed
-try:
-    tesseract_version = subprocess.run(["tesseract", "--version"], capture_output=True, text=True, check=True)
-    print("Tesseract Installed:", tesseract_version.stdout)
-except FileNotFoundError:
-    print("Tesseract is NOT installed!")
-
-pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
-model = YOLO(r'best_license_plate_model_updated.pt') 
+model = YOLO(r'best_license_plate_model_updated.pt')
+reader = easyocr.Reader(['en'])
     
 def apply_custom_css():
     st.markdown("""
@@ -148,7 +139,11 @@ def predict_and_validate_license_plate(uploaded_image):
             confidence = box.conf[0] * 100 
             roi = image[y1:y2, x1:x2]
 
-            text = pytesseract.image_to_string(roi, config='--psm 6').strip().upper()
+            result = reader.readtext(roi)
+
+            text = ""
+            if result:
+                text = result[0][-2].strip().upper()
             spelled_text = spell_out_text(text)
 
             cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
@@ -179,7 +174,11 @@ apply_custom_css()
 
 st.sidebar.markdown('<div class="sidebar"><h2>Navigation</h2></div>', unsafe_allow_html=True)
 st.sidebar.header("📌 Select Option")
-selected_option = st.sidebar.radio("", ["Home", "Upload Image", "About"])
+selected_option = st.sidebar.radio(
+    "Navigation",
+    ["Home", "Upload Image", "About"],
+    label_visibility="collapsed"
+)
 
 if "uploaded_image_key" not in st.session_state:
     st.session_state["uploaded_image_key"] = 0
