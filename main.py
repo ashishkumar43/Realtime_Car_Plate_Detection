@@ -31,8 +31,6 @@ try:
 except FileNotFoundError:
     print("Tesseract is NOT installed!")
 
-
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 model = YOLO(r'best_license_plate_model_updated.pt') 
     
