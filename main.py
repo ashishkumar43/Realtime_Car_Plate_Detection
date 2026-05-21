@@ -22,7 +22,11 @@ except ModuleNotFoundError:
 # st.write("✅ gTTS is installed and working!")
 
 
-model = YOLO(r'best_license_plate_model_updated.pt')
+@st.cache_resource
+def load_model():
+    return YOLO("best_license_plate_model_updated.pt")
+model = load_model()
+
 reader = easyocr.Reader(['en'])
     
 def apply_custom_css():
