@@ -1,256 +1,495 @@
-import streamlit as st
+from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import HTMLResponse
+from ultralytics import YOLO
 from gtts import gTTS
 from io import BytesIO
+import tempfile
+from PIL import Image
+import uvicorn
+import numpy as np
 import cv2
 import easyocr
 import re
-import os
-import time
 import base64
-from PIL import Image
-import numpy as np
-from ultralytics import YOLO
+from io import BytesIO
 
-import os
-import streamlit as st
-try:
-    from gtts import gTTS
-except ModuleNotFoundError:
-    os.system("pip install gtts")
-    from gtts import gTTS  
+app = FastAPI()
 
-# st.write("✅ gTTS is installed and working!")
+# =========================
+# LOAD MODEL & OCR
+# =========================
 
-
-@st.cache_resource
-def load_model():
-    return YOLO("best_license_plate_model_updated.pt")
-model = load_model()
-
+model = YOLO("best_license_plate_model_updated.pt")
 reader = easyocr.Reader(['en'])
-    
-def apply_custom_css():
-    st.markdown("""
+
+# =========================
+# HTML + CSS + JS
+# =========================
+
+html = """
+<!DOCTYPE html>
+<html>
+<head>
+
+    <title>License Plate Detection</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <style>
-    body {
-        background: white;
-        font-family: 'Arial', sans-serif;
-        color: #333;
-    }
-    .stApp {
-        background-color: #f4f4f9;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-    }
-    .sidebar h2 {
-        color: #ffffff;  
-        font-size: 1.8rem;
-        font-weight: bold;
-        text-align: center;
-    }
-    .sidebar {
-        background: linear-gradient(to bottom, #1e90ff, #ff4f58);
-        color: white;
-        padding: 20px;
-        border-radius: 10px;
-    }
-    .sidebar-radio {
-        padding: 10px;
-        border-radius: 8px;
-        background: white;
-        color: black;
-        margin-bottom: 10px;
-    }
-    .stButton>button {
-        background-color: #1e90ff;  
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 12px 24px;
-        font-size: 1.2rem;
-        transition: background 0.3s ease-in-out;
-    }
-    .stButton>button:hover {
-        background-color: #ff4f58; 
-        transform: scale(1.05);
-    }
-    .main-title {
-        color: #1e90ff;
-        font-size: 2.5rem;
-        font-weight: bold;
-        text-align: center;
-        margin-bottom: 20px;
-        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
-    }
-    .subtitle {
-        font-size: 1.2rem;
-        color: #555555;
-        margin: 20px 0;
-        text-align: justify;
-        line-height: 1.6;
-    }
-    .subtitle strong {
-        color: #ff6347;
-    }
-    .file-upload {
-        font-size: 1rem;
-        font-weight: bold;
-        color: #1e90ff;
-        text-align: center;
-        margin-bottom: 40px;
-    }
-    img {
-        border-radius: 10px;
-        margin-top: 20px;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-    }
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:Arial,sans-serif;
+        }
+
+        body{
+            background:#eef2f7;
+            height:100vh;
+            overflow:hidden;
+        }
+
+        .main-container{
+            display:flex;
+            height:100vh;
+            width:100%;
+        }
+
+        /* SIDEBAR */
+
+        .sidebar{
+            width:260px;
+            background:#f4f6f9;
+            border-right:1px solid #ddd;
+            padding:30px 20px;
+        }
+
+        .nav-card{
+            background:linear-gradient(to bottom,#3b82f6,#ef4444);
+            border-radius:12px;
+            padding:30px 20px;
+            color:white;
+            text-align:center;
+            font-size:28px;
+            font-weight:bold;
+            margin-bottom:40px;
+            box-shadow:0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .sidebar h3{
+            color:#444;
+            margin-bottom:20px;
+            font-size:18px;
+        }
+
+        .nav-item{
+            margin:15px 0;
+            color:#555;
+            cursor:pointer;
+            font-size:16px;
+        }
+
+        .nav-item:hover{
+            color:#2563eb;
+        }
+
+        /* CONTENT */
+
+        .content{
+            flex:1;
+            padding:50px;
+            overflow:auto;
+        }
+
+        .title{
+            text-align:center;
+            font-size:48px;
+            font-weight:bold;
+            color:#1d4ed8;
+            margin-bottom:20px;
+        }
+
+        .subtitle{
+            text-align:center;
+            color:#555;
+            font-size:18px;
+            margin-bottom:40px;
+        }
+
+        .upload-section{
+            background:white;
+            border-radius:20px;
+            padding:40px;
+            max-width:900px;
+            margin:auto;
+            box-shadow:0 5px 25px rgba(0,0,0,0.08);
+        }
+
+        .upload-text{
+            text-align:center;
+            color:#2563eb;
+            font-weight:bold;
+            margin-bottom:30px;
+        }
+
+        .upload-grid{
+            display:flex;
+            gap:30px;
+            align-items:flex-start;
+            justify-content:center;
+            flex-wrap:wrap;
+        }
+
+        .upload-box{
+            border:2px dashed #cbd5e1;
+            border-radius:15px;
+            padding:40px;
+            width:320px;
+            text-align:center;
+            background:#f8fafc;
+        }
+
+        .upload-box:hover{
+            border-color:#2563eb;
+        }
+
+        input[type=file]{
+            margin-top:20px;
+        }
+
+        .detect-btn{
+            background:#1d4ed8;
+            color:white;
+            border:none;
+            padding:14px 28px;
+            border-radius:10px;
+            font-size:16px;
+            cursor:pointer;
+            margin-top:25px;
+            transition:0.3s;
+        }
+
+        .detect-btn:hover{
+            background:#2563eb;
+            transform:scale(1.03);
+        }
+
+        .loader{
+            display:none;
+            margin-top:20px;
+            color:#2563eb;
+            font-weight:bold;
+        }
+
+        .result-panel{
+            width:400px;
+        }
+
+        .plate{
+            margin-top:15px;
+            font-size:20px;
+            font-weight:bold;
+            color:#111827;
+        }
+
+        .status{
+            margin-top:15px;
+            font-size:22px;
+            font-weight:bold;
+        }
+
+        .valid{
+            color:#16a34a;
+        }
+
+        .fraud{
+            color:#dc2626;
+        }
+
+        .result-image{
+            width:100%;
+            margin-top:25px;
+            border-radius:15px;
+            border:1px solid #ddd;
+            box-shadow:0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        audio{
+            margin-top:20px;
+            width:100%;
+        }
+
+        @media(max-width:900px){
+
+            .main-container{
+                flex-direction:column;
+            }
+
+            .sidebar{
+                width:100%;
+                height:auto;
+            }
+
+            .content{
+                padding:20px;
+            }
+
+            .title{
+                font-size:34px;
+            }
+
+        }
+
     </style>
-    """, unsafe_allow_html=True)
 
-def generate_audio(message):
-    tts = gTTS(message, lang='en')
-    audio_data = BytesIO()
-    tts.write_to_fp(audio_data)
-    audio_data.seek(0)
-    return audio_data.read()
+</head>
 
-def autoplay_audio(audio_bytes):
-    audio_base64 = base64.b64encode(audio_bytes).decode()
-    audio_html = f"""
-    <audio autoplay>
-        <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
-    </audio>
-    """
-    st.markdown(audio_html, unsafe_allow_html=True)
+<body>
 
-def spell_out_text(text):
-    return ' '.join(text)
+<div class="main-container">
 
-def predict_and_validate_license_plate(uploaded_image):
-    image = Image.open(uploaded_image)
+    <!-- SIDEBAR -->
+
+    <div class="sidebar">
+
+        <div class="nav-card">
+            Navigation
+        </div>
+
+        <h3>📌 Select Option</h3>
+
+        <div class="nav-item">🏠 Home</div>
+        <div class="nav-item">📤 Upload Image</div>
+        <div class="nav-item">ℹ️ About</div>
+
+    </div>
+
+    <!-- CONTENT -->
+
+    <div class="content">
+
+        <div class="title">
+            🚗 Upload an Image for License Plate Detection
+        </div>
+
+        <div class="subtitle">
+            Upload an image of a vehicle to automatically detect and validate the license plate.
+        </div>
+
+        <div class="upload-section">
+
+            <div class="upload-text">
+                📂 Drag and drop an image or click to upload.
+            </div>
+
+            <div class="upload-grid">
+
+                <!-- LEFT -->
+
+                <div class="upload-box">
+
+                    <h3>Upload Vehicle Image</h3>
+
+                    <input type="file" id="fileInput">
+
+                    <br>
+
+                    <button class="detect-btn" onclick="uploadImage()">
+                        🔍 Start Detection
+                    </button>
+
+                    <div class="loader" id="loader">
+                        Processing Image...
+                    </div>
+
+                </div>
+
+                <!-- RIGHT -->
+
+                <div class="result-panel" id="result">
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+async function uploadImage(){
+
+    const fileInput = document.getElementById("fileInput");
+
+    if(fileInput.files.length === 0){
+        alert("Please upload an image");
+        return;
+    }
+
+    document.getElementById("loader").style.display = "block";
+
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+
+    const response = await fetch("/predict",{
+        method:"POST",
+        body:formData
+    });
+
+    const data = await response.json();
+
+    document.getElementById("loader").style.display = "none";
+
+    document.getElementById("result").innerHTML = `
+
+        <div class="plate">
+            🔑 Detected Plate: ${data.plate}
+        </div>
+
+        <div class="status ${data.status_class}">
+            ${data.status}
+        </div>
+
+        <audio controls autoplay>
+            <source src="data:audio/mp3;base64,${data.audio}" type="audio/mp3">
+        </audio>
+
+        <img class="result-image"
+        src="data:image/jpeg;base64,${data.image}">
+    `;
+}
+
+</script>
+
+</body>
+</html>
+"""
+
+# =========================
+# HOME ROUTE
+# =========================
+
+@app.get("/", response_class=HTMLResponse)
+async def home():
+    return html
+
+# =========================
+# PREDICTION ROUTE
+# =========================
+
+@app.post("/predict")
+async def predict(file: UploadFile = File(...)):
+
+    contents = await file.read()
+
+    image = Image.open(BytesIO(contents))
     image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-
-    with st.spinner("🔍 Processing the image, please wait..."):
-        time.sleep(2)
 
     results = model.predict(image, device='cpu')
 
+    detected_plate = "No Plate Found"
+    validation_text = "FRAUDULENT PLATE"
+    status_class = "fraud"
+
     plate_pattern = r'^(MH|HR|DL)[A-Z0-9]{1,2}[A-Z]{1,2}[0-9]{1,4}[A-Z0-9]{0,4}$'
+
+    audio_text = "No plate detected"
+
     for result in results:
+
         for box in result.boxes:
+
             x1, y1, x2, y2 = map(int, box.xyxy[0])
-            confidence = box.conf[0] * 100 
+
+            confidence = box.conf[0] * 100
+
             roi = image[y1:y2, x1:x2]
 
-            result = reader.readtext(roi)
+            ocr_result = reader.readtext(roi)
 
             text = ""
-            if result:
-                text = result[0][-2].strip().upper()
-            spelled_text = spell_out_text(text)
 
-            cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(image, f"{confidence:.2f}%", (x1, y1 - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-            cv2.putText(image, text, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+            if ocr_result:
+                text = ocr_result[0][-2].strip().upper()
 
-            st.write(f"🔑 **Detected Plate:** {text}")
-            autoplay_audio(generate_audio(f"Detected plate is: {spelled_text}"))
-            st.write(f"🔊 **Audio played for plate:** {text}")
-            time.sleep(7)
+            detected_plate = text
 
             if re.match(plate_pattern, text):
-                validation_text = " VALID PLATE"
-                color = (0, 255, 0)
-                autoplay_audio(generate_audio("This is a valid plate."))
+
+                validation_text = "✅ VALID PLATE"
+                status_class = "valid"
+                color = (0,255,0)
+
+                audio_text = f"Detected plate is {text}. This is a valid plate."
+
             else:
-                validation_text = " FRAUDULENT PLATE"
-                color = (255, 0, 0)
-                autoplay_audio(generate_audio("This is a fraudulent plate. Please investigate immediately."))
-                
-            cv2.putText(image, validation_text, (x1, y2 + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
-            time.sleep(10)
 
-    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    st.image(image_rgb, caption="📸 Detected License Plate with Bounding Boxes", use_container_width=True)
+                validation_text = "❌ FRAUDULENT PLATE"
+                status_class = "fraud"
+                color = (0,0,255)
 
-apply_custom_css()
+                audio_text = f"Detected plate is {text}. This is a fraudulent plate."
 
-st.sidebar.markdown('<div class="sidebar"><h2>Navigation</h2></div>', unsafe_allow_html=True)
-st.sidebar.header("📌 Select Option")
-selected_option = st.sidebar.radio(
-    "Navigation",
-    ["Home", "Upload Image", "About"],
-    label_visibility="collapsed"
-)
+            cv2.rectangle(image,(x1,y1),(x2,y2),(0,255,0),2)
 
-if "uploaded_image_key" not in st.session_state:
-    st.session_state["uploaded_image_key"] = 0
+            cv2.putText(
+                image,
+                f"{confidence:.2f}%",
+                (x1,y1-30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255,0,0),
+                2
+            )
 
-if selected_option == "Home":
-    st.markdown('<div class="main-title">🏠 Welcome to License Plate Detection App 🚗</div>', unsafe_allow_html=True)
-    st.markdown("### This app uses advanced YOLO and OCR for real-time vehicle license plate detection and validation.")
+            cv2.putText(
+                image,
+                text,
+                (x1,y1-10),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.8,
+                (0,255,0),
+                2
+            )
 
-if selected_option == "Upload Image":
-    st.markdown('<div class="main-title">📤 Upload an Image for License Plate Detection</div>', unsafe_allow_html=True)
+            cv2.putText(
+                image,
+                validation_text,
+                (x1,y2+30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.8,
+                color,
+                2
+            )
 
-    st.markdown("""
-    <p style="font-size: 1.2rem; color: #555555; text-align: center;">
-        Upload an image of a vehicle to automatically detect and validate the license plate.
-    </p>
-    """, unsafe_allow_html=True)
+    # Convert image to base64
+    _, buffer = cv2.imencode(".jpg", image)
+    image_base64 = base64.b64encode(buffer).decode("utf-8")
 
-    col1, col2 = st.columns(2)
+    # Generate Audio
+    tts = gTTS(audio_text)
 
-    with col1:
-        st.markdown('<div class="file-upload">📂 Drag and drop an image or click to upload.</div>', unsafe_allow_html=True)
-        uploaded_image = st.file_uploader("Choose an image", type=["jpg", "png", "jpeg"], key=st.session_state["uploaded_image_key"], label_visibility="collapsed")
+    audio_fp = BytesIO()
+    tts.write_to_fp(audio_fp)
+    audio_fp.seek(0)
 
-    with col2:
-        if uploaded_image:
-            st.markdown("""
-            <div style="text-align: center; margin-top: 20px;">
-                <button style="background-color: #1e90ff; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer;">
-                    🔍 Start Detection
-                </button>
-            </div>
-            """, unsafe_allow_html=True)
-            predict_and_validate_license_plate(uploaded_image)
-            autoplay_audio(generate_audio("Detection complete."))
-            st.session_state["uploaded_image_key"] += 1
+    audio_base64 = base64.b64encode(audio_fp.read()).decode("utf-8")
 
-elif selected_option == "About":
-    st.markdown("""
-    <div class="main-title">ℹ️ About This App</div>
-    <p style="font-size: 1.2rem; color: #555555; text-align: justify; line-height: 1.6;">
-    Welcome to our License Plate Detection App!🚗 This innovative tool leverages cutting-edge technologies like 
-    YOLO (You Only Look Once) for real-time object detection and OCR (Optical Character Recognition)
-    to automatically detect and read vehicle license plates with incredible accuracy.
-    </p>
+    return {
+        "plate": detected_plate,
+        "status": validation_text,
+        "status_class": status_class,
+        "image": image_base64,
+        "audio": audio_base64
+    }
+    
+# =========================
+# MAIN
+# =========================
 
-    ## Why Choose This App?
-    <p style="font-size: 1.2rem; color: #555555; text-align: justify; line-height: 1.6;">
-        Our app is designed to be user-friendly, quick, and efficient in recognizing vehicle plates, ensuring high 
-        accuracy and reliability for various applications.
-    </p>
-
-    ## Key Features of the App:
-    <ul style="font-size: 1.2rem; color: #555555; line-height: 1.8;">
-        <li><strong>🚗 Real-Time License Plate Detection</strong>: Uses YOLO for high-speed, real-time object detection of vehicle plates.</li>
-        <li><strong>🔠 Optical Character Recognition (OCR)</strong>: Extracts and processes the alphanumeric characters from plates efficiently.</li>
-        <li><strong>✅ Reliable Validation</strong>: The app verifies if a detected license plate matches a valid format.</li>
-        <li><strong>💡 Easy to Use</strong>: Simply upload an image and let the app handle the detection process for you!</li>
-    </ul>
-
-    ## Applications:
-    <p style="font-size: 1.2rem; color: #555555; text-align: justify; line-height: 1.6;">
-        Our license plate detection system can be applied in a variety of industries and sectors such as:
-    </p>
-
-    <ul style="font-size: 1.2rem; color: #555555; line-height: 1.8;">
-        <li><strong>🏙️ Traffic Management</strong>: Helps with vehicle monitoring, law enforcement, and toll collection.</li>
-        <li><strong>🚗 Parking Systems</strong>: Simplifies automated parking access and fee collection.</li>
-        <li><strong>⚖️ Law Enforcement</strong>: Enhances vehicle identification for crime prevention and investigations.</li>
-        <li><strong>🚓 Security Systems</strong>: Monitors and tracks vehicles for surveillance purposes.</li>
-    </ul>
-    """, unsafe_allow_html=True)
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

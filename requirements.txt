@@ -1,11 +1,12 @@
-streamlit
+
+fastapi
+uvicorn
+python-multipart
 opencv-python-headless
-matplotlib
 Pillow
 ultralytics
-gTTS==2.5.4
 easyocr
 numpy
-pandas
 torch
 torchvision
+gTTS==2.5.4
