@@ -271,7 +271,7 @@ html = """
         }
 
         .fraud{
-            color:#dc2626;
+        color:#f59e0b;
         }
 
         .result-image{
@@ -503,92 +503,196 @@ async def predict(file: UploadFile = File(...)):
     results = model.predict(image, device='cpu')
 
     detected_plate = "No Plate Found"
-    validation_text = "FRAUDULENT PLATE"
-    status_class = "fraud"
 
-    plate_pattern = r'^(MH|HR|DL)[A-Z0-9]{1,2}[A-Z]{1,2}[0-9]{1,4}[A-Z0-9]{0,4}$'
+    validation_text = "⚠ NO PLATE DETECTED"
+
+    status_class = "fraud"
 
     audio_text = "No plate detected"
 
+    # Indian vehicle number plate regex
+    plate_pattern = r'^[A-Z]{2}[0-9]{1,2}[A-Z]{1,3}[0-9]{4}$'
+
     for result in results:
+
+        if result.boxes is None:
+            continue
 
         for box in result.boxes:
 
             x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-            confidence = box.conf[0] * 100
+            confidence = float(box.conf[0]) * 100
+
+            # =========================
+            # CROP ROI
+            # =========================
 
             roi = image[y1:y2, x1:x2]
 
-            ocr_result = reader.readtext(roi)
+            # =========================
+            # PREPROCESSING
+            # =========================
+
+            # resize image
+            roi = cv2.resize(roi, None, fx=3, fy=3)
+
+            # grayscale
+            gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+
+            # remove noise
+            gray = cv2.bilateralFilter(gray, 11, 17, 17)
+
+            # sharpen image
+            kernel = np.array([
+                [0, -1, 0],
+                [-1, 5, -1],
+                [0, -1, 0]
+            ])
+
+            gray = cv2.filter2D(gray, -1, kernel)
+
+            # threshold
+            gray = cv2.adaptiveThreshold(
+                gray,
+                255,
+                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                cv2.THRESH_BINARY,
+                11,
+                2
+            )
+
+            # =========================
+            # OCR
+            # =========================
+
+            ocr_result = reader.readtext(
+                gray,
+                allowlist='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+            )
 
             text = ""
 
             if ocr_result:
-                text = ocr_result[0][-2].strip().upper()
+
+                detected_texts = []
+
+                for detection in ocr_result:
+                    detected_texts.append(detection[-2])
+
+                # combine all text
+                text = "".join(detected_texts)
+
+                # uppercase
+                text = text.upper()
+
+                # remove spaces/symbols
+                text = re.sub(r'[^A-Z0-9]', '', text)
+
+                print("DETECTED TEXT:", text)
 
             detected_plate = text
 
-            if re.match(plate_pattern, text):
+            # =========================
+            # VALIDATION
+            # =========================
+
+            if len(text) >= 8 and re.match(plate_pattern, text):
 
                 validation_text = "✅ VALID PLATE"
-                status_class = "valid"
-                color = (0,255,0)
 
-                audio_text = f"Detected plate is {text}. This is a valid plate."
+                status_class = "valid"
+
+                color = (0, 255, 0)
+
+                audio_text = (
+                    f"Detected plate is {text}. "
+                    f"This is a valid vehicle plate."
+                )
 
             else:
 
-                validation_text = "❌ FRAUDULENT PLATE"
+                validation_text = "⚠ INVALID / UNRECOGNIZED PLATE"
+
                 status_class = "fraud"
-                color = (0,0,255)
 
-                audio_text = f"Detected plate is {text}. This is a fraudulent plate. Please investigate immediately."
+                color = (0, 0, 255)
 
-            cv2.rectangle(image,(x1,y1),(x2,y2),(0,255,0),2)
+                audio_text = (
+                    f"Detected plate is {text}. "
+                    f"The plate format could not be recognized."
+                )
+
+            # =========================
+            # DRAW RESULTS
+            # =========================
+
+            cv2.rectangle(
+                image,
+                (x1, y1),
+                (x2, y2),
+                color,
+                2
+            )
 
             cv2.putText(
                 image,
                 f"{confidence:.2f}%",
-                (x1,y1-30),
+                (x1, y1 - 30),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.7,
-                (255,0,0),
+                (255, 0, 0),
                 2
             )
 
             cv2.putText(
                 image,
                 text,
-                (x1,y1-10),
+                (x1, y1 - 10),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.8,
-                (0,255,0),
+                color,
                 2
             )
 
             cv2.putText(
                 image,
                 validation_text,
-                (x1,y2+30),
+                (x1, y2 + 30),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.8,
+                0.7,
                 color,
                 2
             )
-            
-    # Convert image to base64
-    _, buffer = cv2.imencode(".jpg", image)
-    image_base64 = base64.b64encode(buffer).decode("utf-8")
 
-    # Generate Audio
+            # stop after first plate
+            break
+
+    # =========================
+    # IMAGE TO BASE64
+    # =========================
+
+    _, buffer = cv2.imencode(".jpg", image)
+
+    image_base64 = base64.b64encode(
+        buffer
+    ).decode("utf-8")
+
+    # =========================
+    # AUDIO GENERATION
+    # =========================
+
     tts = gTTS(audio_text)
 
     audio_fp = BytesIO()
+
     tts.write_to_fp(audio_fp)
+
     audio_fp.seek(0)
 
-    audio_base64 = base64.b64encode(audio_fp.read()).decode("utf-8")
+    audio_base64 = base64.b64encode(
+        audio_fp.read()
+    ).decode("utf-8")
 
     return {
         "plate": detected_plate,
