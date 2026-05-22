@@ -25,13 +25,12 @@ reader = easyocr.Reader(['en'])
 # =========================
 # HTML + CSS + JS
 # =========================
-
 html = """
 <!DOCTYPE html>
 <html>
 <head>
 
-    <title>License Plate Detection</title>
+    <title>AutoVision AI</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -45,156 +44,246 @@ html = """
         }
 
         body{
-            background:#eef2f7;
-            height:100vh;
-            overflow:hidden;
+            background:#f1f5f9;
+            overflow-x:hidden;
         }
 
-        .main-container{
-            display:flex;
-            height:100vh;
+        /* =========================
+           TOP NAVBAR
+        ==========================*/
+
+        .navbar{
             width:100%;
+            height:85px;
+            background:white;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:0 60px;
+            box-shadow:0 4px 18px rgba(0,0,0,0.06);
+            position:sticky;
+            top:0;
+            z-index:100;
         }
 
-        /* SIDEBAR */
-
-        .sidebar{
-            width:260px;
-            background:#f4f6f9;
-            border-right:1px solid #ddd;
-            padding:30px 20px;
+        .logo-section{
+            display:flex;
+            align-items:center;
+            gap:18px;
         }
 
-        .nav-card{
-            background:linear-gradient(to bottom,#3b82f6,#ef4444);
-            border-radius:12px;
-            padding:30px 20px;
+        .logo{
+            width:58px;
+            height:58px;
+            border-radius:16px;
+            background:linear-gradient(to right,#2563eb,#7c3aed);
+            display:flex;
+            justify-content:center;
+            align-items:center;
             color:white;
-            text-align:center;
             font-size:28px;
             font-weight:bold;
-            margin-bottom:40px;
-            box-shadow:0 5px 20px rgba(0,0,0,0.1);
+            box-shadow:0 6px 18px rgba(37,99,235,0.3);
         }
 
-        .sidebar h3{
-            color:#444;
-            margin-bottom:20px;
-            font-size:18px;
+        .brand-title{
+            font-size:28px;
+            font-weight:bold;
+            color:#111827;
         }
 
-        .nav-item{
-            margin:15px 0;
-            color:#555;
-            cursor:pointer;
+        .brand-subtitle{
+            color:#6b7280;
+            font-size:14px;
+            margin-top:3px;
+        }
+
+        .developer{
             font-size:16px;
+            color:#374151;
         }
 
-        .nav-item:hover{
+        .developer span{
             color:#2563eb;
-        }
-
-        /* CONTENT */
-
-        .content{
-            flex:1;
-            padding:50px;
-            overflow:auto;
-        }
-
-        .title{
-            text-align:center;
-            font-size:48px;
             font-weight:bold;
-            color:#1d4ed8;
-            margin-bottom:20px;
         }
 
-        .subtitle{
+        /* =========================
+           HERO SECTION
+        ==========================*/
+
+        .hero{
+            padding:70px 20px 40px;
             text-align:center;
-            color:#555;
-            font-size:18px;
-            margin-bottom:40px;
         }
 
-        .upload-section{
+        .hero-title{
+            font-size:52px;
+            font-weight:bold;
+            color:#111827;
+            line-height:1.2;
+        }
+
+        .gradient-text{
+            background:linear-gradient(to right,#2563eb,#7c3aed);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+        }
+
+        .hero-subtitle{
+            margin-top:25px;
+            color:#6b7280;
+            font-size:20px;
+            line-height:1.7;
+            max-width:850px;
+            margin-left:auto;
+            margin-right:auto;
+        }
+
+        /* =========================
+           MAIN CARD
+        ==========================*/
+
+        .main-card{
+            width:92%;
+            max-width:1200px;
+            margin:40px auto 70px;
             background:white;
-            border-radius:20px;
-            padding:40px;
-            max-width:900px;
-            margin:auto;
-            box-shadow:0 5px 25px rgba(0,0,0,0.08);
+            border-radius:28px;
+            padding:45px;
+            box-shadow:0 10px 40px rgba(0,0,0,0.08);
         }
 
-        .upload-text{
+        .section-title{
             text-align:center;
-            color:#2563eb;
+            font-size:30px;
+            color:#111827;
             font-weight:bold;
-            margin-bottom:30px;
+            margin-bottom:12px;
         }
 
-        .upload-grid{
-            display:flex;
-            gap:30px;
-            align-items:flex-start;
-            justify-content:center;
-            flex-wrap:wrap;
+        .section-subtitle{
+            text-align:center;
+            color:#6b7280;
+            margin-bottom:45px;
+            font-size:17px;
         }
+
+        .content-grid{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:40px;
+        }
+
+        /* =========================
+           UPLOAD BOX
+        ==========================*/
 
         .upload-box{
             border:2px dashed #cbd5e1;
-            border-radius:15px;
-            padding:40px;
-            width:320px;
+            border-radius:24px;
+            padding:45px;
             text-align:center;
             background:#f8fafc;
+            transition:0.3s;
         }
 
         .upload-box:hover{
             border-color:#2563eb;
+            background:#eff6ff;
+        }
+
+        .upload-icon{
+            font-size:70px;
+            margin-bottom:20px;
+        }
+
+        .upload-heading{
+            font-size:26px;
+            font-weight:bold;
+            color:#111827;
+            margin-bottom:12px;
+        }
+
+        .upload-desc{
+            color:#6b7280;
+            margin-bottom:25px;
+            line-height:1.6;
         }
 
         input[type=file]{
-            margin-top:20px;
+            width:100%;
+            padding:18px;
+            border-radius:14px;
+            border:1px solid #d1d5db;
+            background:white;
+            cursor:pointer;
         }
 
         .detect-btn{
-            background:#1d4ed8;
-            color:white;
+            margin-top:28px;
+            width:100%;
+            padding:18px;
             border:none;
-            padding:14px 28px;
-            border-radius:10px;
-            font-size:16px;
+            border-radius:14px;
+            background:linear-gradient(to right,#2563eb,#7c3aed);
+            color:white;
+            font-size:18px;
+            font-weight:bold;
             cursor:pointer;
-            margin-top:25px;
             transition:0.3s;
+            box-shadow:0 6px 20px rgba(37,99,235,0.25);
         }
 
         .detect-btn:hover{
-            background:#2563eb;
-            transform:scale(1.03);
+            transform:translateY(-3px);
+            opacity:0.95;
         }
 
         .loader{
+            margin-top:22px;
             display:none;
-            margin-top:20px;
             color:#2563eb;
             font-weight:bold;
+            font-size:18px;
         }
 
+        /* =========================
+           RESULT PANEL
+        ==========================*/
+
         .result-panel{
-            width:400px;
+            background:#f8fafc;
+            border-radius:24px;
+            padding:35px;
+            border:1px solid #e5e7eb;
+            min-height:400px;
+        }
+
+        .result-title{
+            font-size:26px;
+            font-weight:bold;
+            color:#111827;
+            margin-bottom:25px;
+            text-align:center;
+        }
+
+        .plate-box{
+            background:white;
+            border-radius:16px;
+            padding:18px;
+            margin-top:15px;
+            box-shadow:0 4px 10px rgba(0,0,0,0.05);
         }
 
         .plate{
-            margin-top:15px;
-            font-size:20px;
+            font-size:22px;
             font-weight:bold;
             color:#111827;
         }
 
         .status{
-            margin-top:15px;
+            margin-top:20px;
             font-size:22px;
             font-weight:bold;
         }
@@ -209,34 +298,51 @@ html = """
 
         .result-image{
             width:100%;
-            margin-top:25px;
-            border-radius:15px;
-            border:1px solid #ddd;
-            box-shadow:0 5px 20px rgba(0,0,0,0.08);
+            margin-top:30px;
+            border-radius:18px;
+            border:1px solid #d1d5db;
+            box-shadow:0 8px 25px rgba(0,0,0,0.08);
         }
 
         audio{
-            margin-top:20px;
             width:100%;
+            margin-top:18px;
         }
+
+        /* =========================
+           FOOTER
+        ==========================*/
+
+        .footer{
+            text-align:center;
+            padding:25px;
+            color:#6b7280;
+            font-size:15px;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ==========================*/
 
         @media(max-width:900px){
 
-            .main-container{
-                flex-direction:column;
+            .content-grid{
+                grid-template-columns:1fr;
             }
 
-            .sidebar{
-                width:100%;
-                height:auto;
+            .hero-title{
+                font-size:38px;
             }
 
-            .content{
+            .navbar{
                 padding:20px;
+                flex-direction:column;
+                height:auto;
+                gap:15px;
             }
 
-            .title{
-                font-size:34px;
+            .brand-title{
+                font-size:24px;
             }
 
         }
@@ -247,77 +353,111 @@ html = """
 
 <body>
 
-<div class="main-container">
+    <!-- NAVBAR -->
 
-    <!-- SIDEBAR -->
+    <div class="navbar">
 
-    <div class="sidebar">
+        <div class="logo-section">
 
-        <div class="nav-card">
-            Navigation
-        </div>
-
-        <h3>📌 Select Option</h3>
-
-        <div class="nav-item">🏠 Home</div>
-        <div class="nav-item">📤 Upload Image</div>
-        <div class="nav-item">ℹ️ About</div>
-
-    </div>
-
-    <!-- CONTENT -->
-
-    <div class="content">
-
-        <div class="title">
-            🚗 Upload an Image for License Plate Detection
-        </div>
-
-        <div class="subtitle">
-            Upload an image of a vehicle to automatically detect and validate the license plate.
-        </div>
-
-        <div class="upload-section">
-
-            <div class="upload-text">
-                📂 Drag and drop an image or click to upload.
+            <div class="logo">
+                🚘
             </div>
 
-            <div class="upload-grid">
+            <div>
 
-                <!-- LEFT -->
-
-                <div class="upload-box">
-
-                    <h3>Upload Vehicle Image</h3>
-
-                    <input type="file" id="fileInput">
-
-                    <br>
-
-                    <button class="detect-btn" onclick="uploadImage()">
-                        🔍 Start Detection
-                    </button>
-
-                    <div class="loader" id="loader">
-                        Processing Image...
-                    </div>
-
+                <div class="brand-title">
+                    AutoVision AI
                 </div>
 
-                <!-- RIGHT -->
-
-                <div class="result-panel" id="result">
-
+                <div class="brand-subtitle">
+                    Smart License Plate Detection System
                 </div>
 
             </div>
 
         </div>
 
+        <div class="developer">
+            Developed by <span>Ashish Kumar</span>
+        </div>
+
     </div>
 
-</div>
+    <!-- HERO -->
+
+    <div class="hero">
+
+        <div class="hero-title">
+            AI Powered <span class="gradient-text">License Plate Detection</span>
+        </div>
+
+    </div>
+
+    <!-- MAIN CARD -->
+
+    <div class="main-card">
+
+        <div class="section-title">
+            🚗 Vehicle Plate Scanner
+        </div>
+
+        <div class="section-subtitle">
+            Upload your vehicle image below to start AI detection.
+        </div>
+
+        <div class="content-grid">
+
+            <!-- LEFT SIDE -->
+
+            <div class="upload-box">
+
+                <div class="upload-icon">
+                    📤
+                </div>
+
+                <div class="upload-heading">
+                    Upload Vehicle Image
+                </div>
+
+                <div class="upload-desc">
+                    Supported formats: JPG, PNG, JPEG
+                </div>
+
+                <input type="file" id="fileInput">
+
+                <button class="detect-btn" onclick="uploadImage()">
+                    🔍 Start Detection
+                </button>
+
+                <div class="loader" id="loader">
+                    Processing Image...
+                </div>
+
+            </div>
+
+            <!-- RIGHT SIDE -->
+
+            <div class="result-panel" id="result">
+
+                <div class="result-title">
+                    Detection Results
+                </div>
+
+                <p style="text-align:center;color:#6b7280;">
+                    Your detection output will appear here.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+
+    <div class="footer">
+        © 2026 AutoVision AI • Built with FastAPI, YOLO & EasyOCR
+    </div>
 
 <script>
 
@@ -346,12 +486,20 @@ async function uploadImage(){
 
     document.getElementById("result").innerHTML = `
 
-        <div class="plate">
-            🔑 Detected Plate: ${data.plate}
+        <div class="result-title">
+            Detection Results
         </div>
 
-        <div class="status ${data.status_class}">
-            ${data.status}
+        <div class="plate-box">
+
+            <div class="plate">
+                🔑 Detected Plate: ${data.plate}
+            </div>
+
+            <div class="status ${data.status_class}">
+                ${data.status}
+            </div>
+
         </div>
 
         <audio controls autoplay>
@@ -368,6 +516,7 @@ async function uploadImage(){
 </body>
 </html>
 """
+
 
 # =========================
 # HOME ROUTE
