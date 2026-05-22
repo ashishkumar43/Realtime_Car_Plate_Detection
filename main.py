@@ -15,16 +15,9 @@ from io import BytesIO
 
 app = FastAPI()
 
-# =========================
-# LOAD MODEL & OCR
-# =========================
-
 model = YOLO("best_license_plate_model_updated.pt")
 reader = easyocr.Reader(['en'])
 
-# =========================
-# HTML + CSS + JS
-# =========================
 html = """
 <!DOCTYPE html>
 <html>
@@ -48,10 +41,7 @@ html = """
             overflow-x:hidden;
         }
 
-        /* =========================
-           TOP NAVBAR
-        ==========================*/
-
+    
         .navbar{
             width:100%;
             height:85px;
@@ -108,10 +98,7 @@ html = """
             font-weight:bold;
         }
 
-        /* =========================
-           HERO SECTION
-        ==========================*/
-
+        
         .hero{
             padding:70px 20px 40px;
             text-align:center;
@@ -140,10 +127,7 @@ html = """
             margin-right:auto;
         }
 
-        /* =========================
-           MAIN CARD
-        ==========================*/
-
+        
         .main-card{
             width:92%;
             max-width:1200px;
@@ -175,9 +159,6 @@ html = """
             gap:40px;
         }
 
-        /* =========================
-           UPLOAD BOX
-        ==========================*/
 
         .upload-box{
             border:2px dashed #cbd5e1;
@@ -248,10 +229,7 @@ html = """
             font-size:18px;
         }
 
-        /* =========================
-           RESULT PANEL
-        ==========================*/
-
+        
         .result-panel{
             background:#f8fafc;
             border-radius:24px;
@@ -309,10 +287,7 @@ html = """
             margin-top:18px;
         }
 
-        /* =========================
-           FOOTER
-        ==========================*/
-
+    
         .footer{
             text-align:center;
             padding:25px;
@@ -320,9 +295,6 @@ html = """
             font-size:15px;
         }
 
-        /* =========================
-           RESPONSIVE
-        ==========================*/
 
         @media(max-width:900px){
 
@@ -352,8 +324,6 @@ html = """
 </head>
 
 <body>
-
-    <!-- NAVBAR -->
 
     <div class="navbar">
 
@@ -509,6 +479,7 @@ async function uploadImage(){
         <img class="result-image"
         src="data:image/jpeg;base64,${data.image}">
     `;
+
 }
 
 </script>
@@ -517,18 +488,9 @@ async function uploadImage(){
 </html>
 """
 
-
-# =========================
-# HOME ROUTE
-# =========================
-
 @app.get("/", response_class=HTMLResponse)
 async def home():
     return html
-
-# =========================
-# PREDICTION ROUTE
-# =========================
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
@@ -581,7 +543,7 @@ async def predict(file: UploadFile = File(...)):
                 status_class = "fraud"
                 color = (0,0,255)
 
-                audio_text = f"Detected plate is {text}. This is a fraudulent plate."
+                audio_text = f"Detected plate is {text}. This is a fraudulent plate. Please investigate immediately."
 
             cv2.rectangle(image,(x1,y1),(x2,y2),(0,255,0),2)
 
@@ -614,7 +576,7 @@ async def predict(file: UploadFile = File(...)):
                 color,
                 2
             )
-
+            
     # Convert image to base64
     _, buffer = cv2.imencode(".jpg", image)
     image_base64 = base64.b64encode(buffer).decode("utf-8")
@@ -636,9 +598,6 @@ async def predict(file: UploadFile = File(...)):
         "audio": audio_base64
     }
     
-# =========================
-# MAIN
-# =========================
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
